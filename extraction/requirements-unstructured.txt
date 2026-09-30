@@ -4,5 +4,5 @@
 # Usage:
 #   pip install -r extraction/requirements-unstructured.txt
 
-unstructured[pdf]>=0.16.20
+unstructured[pdf]>=0.27.9
 pdfplumber>=0.11.0
