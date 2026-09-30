@@ -69,14 +69,7 @@ export const processKnowledgeDoc = inngest.createFunction(
 
       // Step 3: Submit to Company-DB knowledge domain (if configured)
       const submitted = await step.run("submit-to-company-db", async () => {
-        let companySlug: string;
-        try {
-          companySlug = await getCompanySlug(companyId);
-        } catch {
-          // Company-DB not configured — skip
-          return false;
-        }
-
+        const companySlug = await getCompanySlug(companyId);
         // Resolve write queue port from company record
         // Same pattern as lib/workers/reconciliation.ts:72-76
         const portRow = await db.execute<{ company_db_port: number }>(sql`

@@ -22,6 +22,7 @@ import {
   AmbiguousCompanyContextError,
   ForbiddenError,
   InvalidCompanySelectorError,
+  CompanyDbUnavailableError,
 } from "./errors";
 import { createHash } from "crypto";
 import { db } from "./db";
@@ -51,10 +52,6 @@ import {
   getAccessibleCompaniesForApiKey,
   resolveApiKeyCompanyId,
 } from "./api-key-access-runtime";
-import {
-  logGuardrailEvent,
-  resolveGuardrailRollout,
-} from "./guardrails/safe-rollout";
 
 export type AuthContext = {
   userId: string;
@@ -282,6 +279,9 @@ async function resolveSessionCompanyContext(
 ): Promise<AuthContext> {
   const headerCompanyId = hdrs.get("x-company-id")?.trim() || null;
   const requestedCompanyId = getRequestedCompanyIdFromHeaders(hdrs);
+  if (requestedCompanyId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedCompanyId)) {
+    throw new InvalidCompanySelectorError(headerCompanyId ? "header" : "cookie");
+  }
 
   let companyId: string;
   let role: string;
@@ -296,33 +296,9 @@ async function resolveSessionCompanyContext(
     if (!(err instanceof UnauthorizedError) || !requestedCompanyId) {
       throw err;
     }
-    const tenantFailClosedGuardrail = resolveGuardrailRollout({
-      key: "tenant_fail_closed",
-      companyId: requestedCompanyId,
-    });
-    logGuardrailEvent({
-      decision: tenantFailClosedGuardrail,
-      action: tenantFailClosedGuardrail.shouldEnforce
-        ? "blocked_invalid_company_selector"
-        : "would_block_invalid_company_selector",
-      reason: headerCompanyId
-        ? "invalid_x_company_id"
-        : "stale_active_company_cookie",
-      details: {
-        authMethod: "session",
-        explicitHeader: Boolean(headerCompanyId),
-      },
-    });
-
-    if (tenantFailClosedGuardrail.shouldEnforce) {
-      throw new InvalidCompanySelectorError(headerCompanyId ? "header" : "cookie");
-    }
-
-    const membership =
-      (await getDefaultCompanyMembershipForUser(userId)) ??
-      (await requireCompanyWithRole(userId));
-    companyId = membership.companyId;
-    role = membership.role;
+    // Never redirect a scoped operation to a different tenant. The error handler
+    // clears stale cookies so the caller can explicitly select a valid company.
+    throw new InvalidCompanySelectorError(headerCompanyId ? "header" : "cookie");
   }
 
   const domainPolicy = await resolveDirectCompanyDomainPolicy(userId, companyId, role);
@@ -453,6 +429,9 @@ export async function getAuthContext(): Promise<AuthContext> {
 }
 
 export function handleApiError(err: unknown): NextResponse {
+  if (err instanceof CompanyDbUnavailableError) {
+    return NextResponse.json({ error: err.message }, { status: 503 });
+  }
   if (err instanceof UnauthorizedError) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

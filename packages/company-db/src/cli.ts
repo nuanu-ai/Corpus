@@ -184,8 +184,14 @@ async function main(): Promise<void> {
 
   const apiServer = Fastify({ logger: false });
 
-  // Health check
-  apiServer.get("/health", async () => ({ status: "ok", version: "0.0.1" }));
+  // Readiness includes all listeners and the tenant identity, so callers cannot
+  // mistake a different process on a reused port for their knowledge service.
+  let ready = false;
+  apiServer.get("/health", async (_request, reply) =>
+    reply.code(ready ? 200 : 503).send({
+      status: ready ? "ok" : "starting", version: "0.0.1", tenantSlug,
+    }),
+  );
 
   // Register API routes (tenantSlug enables request routing validation)
   registerApiRoutes(
@@ -216,12 +222,17 @@ async function main(): Promise<void> {
   console.log(`[company-db] MCP server listening on :${mcpServer.port}`);
 
   console.log(`[company-db] Ready.`);
+  ready = true;
   console.log(`  API:   http://127.0.0.1:${port}/api/v1/`);
   console.log(`  Queue: http://127.0.0.1:${queuePort}/write`);
   console.log(`  MCP:   http://127.0.0.1:${mcpServer.port}/mcp`);
 
   // Graceful shutdown
+  let shuttingDown = false;
   const shutdown = async () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    ready = false;
     console.log("[company-db] Shutting down...");
     await writeQueue.close();
     await mcpServer.close();

@@ -47,10 +47,19 @@ function normalizeStorageKey(value: string | null | undefined): string | undefin
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function isInngestProcessor(): boolean {
+  const processor = process.env.CORPUS_DOCUMENT_PROCESSOR;
+  if (processor && !["inngest", "codex"].includes(processor)) {
+    throw new Error("CORPUS_DOCUMENT_PROCESSOR must be inngest or codex.");
+  }
+  return processor === "inngest";
+}
+
 export function shouldUsePostIngressDispatch(input: {
   companyId: string;
   fileType: string;
 }): boolean {
+  if (isInngestProcessor()) return true;
   const canaryEnabled = resolveFlagForCompany(
     envFlagEnabled("INGEST_PRECODEX_TRIAGE_V1"),
     input.companyId,
@@ -97,6 +106,11 @@ export function resolveDocumentIngressEventName(input: {
   companyId: string;
   fileType: string;
 }): DocumentIngressEventName {
+  // The self-hosted path uses the existing knowledge/structured document
+  // handlers directly; Codex triage remains available to configured workers.
+  if (isInngestProcessor()) {
+    return documentEventName(input.fileType) as DocumentIngressEventName;
+  }
   if (shouldUsePostIngressDispatch(input)) {
     return "document/ingress-received";
   }

@@ -868,19 +868,7 @@ export async function executeCompanyChatTurn(input: {
       );
     }
 
-    // Lazy-provision the per-tenant company-db on first use (community-tier signups
-    // arrive here with provisioning_status='pending'). No-op for already-active
-    // tenants — costs one indexed SELECT.
-    try {
-      await ensureCompanyProvisioned(companyId);
-    } catch (provisionErr) {
-      console.error(
-        `[chat] Lazy provisioning failed for companyId=${companyId}:`,
-        provisionErr,
-      );
-      // Fall through — let the downstream queries error naturally so the user
-      // sees a clear "company not ready" experience rather than a generic 500.
-    }
+    await ensureCompanyProvisioned(companyId);
 
     // Fetch company + user data to build the profile for the system prompt
     const [companyRow] = await db

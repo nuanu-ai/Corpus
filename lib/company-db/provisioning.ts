@@ -1,6 +1,8 @@
 import { execFile } from "child_process";
 import { access, mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { join, resolve } from "path";
+import { waitForCompanyDb } from "./readiness";
+import { CompanyDbUnavailableError } from "@/lib/errors";
 import { promisify } from "util";
 
 import { eq, sql, type SQLWrapper } from "drizzle-orm";
@@ -901,7 +903,7 @@ export async function provisionTenantDbRepo(
 
   const tenant = await getTenantRecord(tenantId);
   const slug = await getTenantSlug(tenant.id);
-  const repoBase = process.env.COMPANY_DB_REPO ?? "/data/companies";
+  const repoBase = resolve(/* turbopackIgnore: true */ process.env.COMPANY_DB_REPO || "./data/companies");
   const repoPath = join(/* turbopackIgnore: true */ repoBase, slug);
 
   await ensureRepoScaffold(repoPath, tenant);
@@ -924,47 +926,10 @@ export async function provisionCompanyDbRepo(
   return provisionTenantDbRepo(companyId);
 }
 
-/**
- * Materialise a company-db tenant (git repo + PM2 daemon) lazily on demand.
- * Idempotent — safe to call on every chat / upload entry path.
- *
- * Reads `companies.provisioning_status`:
- *   - 'active' (default for existing tenants)  → no-op
- *   - 'pending' (community-tier signup, never used)→ provision now, flip to 'active'
- *   - 'failed' (prior attempt errored)         → retry, flip to 'active' or stay 'failed'
- *
- * Use this at the start of any handler that requires the per-tenant company-db
- * to be live (chat route, document upload, etc). The status check is a single
- * indexed SELECT and short-circuits when active, so the steady-state overhead
- * is one cheap query.
- */
+/** Wait for the supervisor (or an external manager) to start this tenant. */
 export async function ensureCompanyProvisioned(companyId: string): Promise<void> {
-  const rows = (await db.execute(sql`
-    SELECT provisioning_status FROM companies WHERE id = ${companyId}::uuid LIMIT 1
-  `)) as unknown as Array<{ provisioning_status: string }>;
-  const status = rows[0]?.provisioning_status;
-  if (!status || status === "active") return;
-
-  if (status === "pending" || status === "failed") {
-    try {
-      await provisionTenantDbRepo(companyId);
-      await db.execute(sql`
-        UPDATE companies
-        SET provisioning_status = 'active', updated_at = now()
-        WHERE id = ${companyId}::uuid
-      `);
-      console.info(`[company-db] Lazy-provisioned companyId=${companyId} (was ${status})`);
-    } catch (error) {
-      await db.execute(sql`
-        UPDATE companies
-        SET provisioning_status = 'failed', updated_at = now()
-        WHERE id = ${companyId}::uuid
-      `);
-      console.error(
-        `[company-db] Lazy provisioning failed for companyId=${companyId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
+  const tenant = await getTenantRecord(companyId);
+  const slug = await getTenantSlug(companyId);
+  const ready = await waitForCompanyDb(tenant.companyDbPort, slug, 15_000);
+  if (!ready) throw new CompanyDbUnavailableError();
 }

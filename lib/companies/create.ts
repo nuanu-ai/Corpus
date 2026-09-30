@@ -1,4 +1,4 @@
-import { allocateNextCompanyDbPort, provisionCompanyDbRepo } from "@/lib/company-db/provisioning";
+import { allocateNextCompanyDbPort, ensureCompanyProvisioned } from "@/lib/company-db/provisioning";
 import { getCompanySlug } from "@/lib/company-db/tenant";
 import { normalizeCompanyDescription, withCompanyDescription } from "@/lib/company-settings";
 import { db } from "@/lib/db";
@@ -78,6 +78,7 @@ export async function createCompanyForUser(
         reportingCurrency: reportingCurrency ?? "USD",
         settings: withCompanyDescription({}, companyDescription),
         companyDbPort,
+        provisioningStatus: "pending",
       })
       .returning({
         id: companies.id,
@@ -107,8 +108,7 @@ export async function createCompanyForUser(
   let provisioning: CreateCompanyForUserResult["provisioning"] = { ok: true };
   let slug = company.slug;
   try {
-    const provisioned = await provisionCompanyDbRepo(company.id);
-    slug = provisioned?.slug ?? company.slug;
+    await ensureCompanyProvisioned(company.id);
     if (!slug) {
       slug = await getCompanySlug(company.id);
     }
