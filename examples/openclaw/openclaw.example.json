@@ -1,0 +1,13 @@
+{
+  "skills": {
+    "entries": {
+      "openclaw-corpus-agent": {
+        "enabled": true
+      }
+    },
+    "load": {
+      "watch": true,
+      "watchDebounceMs": 250
+    }
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "CORPUS OpenClaw Agent"
+  short_description: "Use CORPUS through one bearer key and app-level MCP."
+  default_prompt: "Use the CORPUS OpenClaw skill to inspect session, resolve company scope, and operate through bin/openclaw-corpus-adapter.mjs or /api/agent/mcp before any REST fallback."

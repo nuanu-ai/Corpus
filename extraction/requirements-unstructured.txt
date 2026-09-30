@@ -1,0 +1,8 @@
+# Optional dependencies for Unstructured PDF/image fallback.
+# Install manually when enabling production-grade financial PDF extraction.
+#
+# Usage:
+#   pip install -r extraction/requirements-unstructured.txt
+
+unstructured[pdf]>=0.16.20
+pdfplumber>=0.11.0

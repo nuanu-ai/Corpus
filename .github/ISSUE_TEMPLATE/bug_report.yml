@@ -1,0 +1,34 @@
+name: Bug report
+description: Help us reproduce and fix a problem.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Use synthetic data. For vulnerabilities, use private security reporting instead."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include what you expected and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reproducible example, without credentials or company data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: Commit SHA or release tag
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node.js, browser, and relevant optional services.

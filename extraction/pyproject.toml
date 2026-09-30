@@ -1,0 +1,10 @@
+[project]
+name = "corpus-extraction"
+version = "0.0.1"
+description = "Document extraction pipeline for company-db"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

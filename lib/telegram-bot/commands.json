@@ -1,0 +1,11 @@
+[
+  { "command": "menu", "description": "Open Corpus bot menu" },
+  { "command": "companies", "description": "Switch active company" },
+  { "command": "create_company", "description": "Create a new company" },
+  { "command": "create_project", "description": "Create a project in the active company" },
+  { "command": "status", "description": "Show active company and thread" },
+  { "command": "new", "description": "Create a new Telegram chat thread" },
+  { "command": "threads", "description": "List Telegram threads" },
+  { "command": "cancel", "description": "Cancel pending bot action" },
+  { "command": "help", "description": "Show bot help" }
+]

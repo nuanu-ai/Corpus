@@ -1,0 +1,19 @@
+name: Feature request
+description: Describe a use case Corpus could support better.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Tell us who needs this and what is difficult today. Use synthetic examples.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested approach
+      description: Include alternatives or a smaller solution if you have one.
+    validations:
+      required: true

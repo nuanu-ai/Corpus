@@ -1,0 +1,40 @@
+{
+  "name": "@corpus/company-db",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./*": { "import": "./dist/*.js", "types": "./dist/*.d.ts" }
+  },
+  "bin": {
+    "company-db": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/cli.ts src/queue/http-server.ts src/api/mcp-server.ts src/git/hooks/pre-commit.ts src/git/hooks/post-commit.ts src/semantic/reindex.ts --format esm --dts --outDir dist --clean",
+    "dev": "tsup --watch",
+    "start": "node dist/cli.js",
+    "semantic:reindex": "node dist/semantic/reindex.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "simple-git": "^3.36.0",
+    "better-sqlite3": "^11.7.0",
+    "yaml": "^2.7.0",
+    "fastify": "^5.12.3",
+    "tinyglobby": "^0.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "tsup": "^8.0.0",
+    "vitest": "^4.0.18",
+    "typescript": "^5.0.0"
+  }
+}

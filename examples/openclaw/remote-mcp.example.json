@@ -1,0 +1,8 @@
+{
+  "name": "corpus",
+  "url": "https://corpus.example/api/agent/mcp",
+  "headers": {
+    "Authorization": "Bearer corpus_sk_replace_me",
+    "x-company-id": "replace-with-company-id"
+  }
+}
