@@ -30,7 +30,7 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3000
       BETTER_AUTH_SECRET: ci-only-placeholder-secret-at-least-32-characters
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/corpus
-      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
       COMPANY_DB_INTERNAL_SERVICE_SECRET: ci-only-placeholder-service-secret
       INNGEST_SIGNING_KEY: signkey-ci-only-placeholder
       CORPUS_DEMO_MODE: "false"

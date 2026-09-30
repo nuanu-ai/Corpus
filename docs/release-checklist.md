@@ -40,6 +40,8 @@ uploads to existing Inngest handlers, and rejects invalid company selectors.
 The smoke test exercises real PostgreSQL, Company-DB, Inngest, authenticated
 HTTP requests, document indexing, source references, and service restart.
 
+Next.js and its environment loader are pinned to 16.3.8, including the fix for
+[GHSA-vcvr-r3jv-pc5j](https://github.com/advisories/GHSA-vcvr-r3jv-pc5j).
 The updated lockfile and scoped overrides report zero npm audit findings as of
 2026-10-01, including development dependencies. This supersedes the initial
 snapshot above; it is not a full security assessment or a production attestation.
