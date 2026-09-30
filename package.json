@@ -53,7 +53,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "docx": "^9.6.1",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.3",
     "inngest": "^3.54.2",
     "jose": "^6.2.2",
     "lucide-react": "^0.575.0",
