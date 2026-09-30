@@ -1,43 +1,26 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
-
-const COMPANY_DB_BASE =
-  process.env.COMPANY_DB_REST_URL ?? "http://localhost:3100";
+import { companies } from "@/lib/db/schema";
+import { isNotNull, ne, or } from "drizzle-orm";
+import { isCompanyDbReady } from "@/lib/company-db/readiness";
 
 export async function GET() {
-  const services: Record<string, "ok" | "unreachable"> = {
-    database: "unreachable",
-    companyDb: "unreachable",
+  const services: Record<string, "ok" | "unreachable" | "idle"> = {
+    database: "unreachable", companyDb: "unreachable",
   };
-
-  // Check database connection
   try {
-    await db.execute(sql`SELECT 1`);
+    const tenants = await db.select({ slug: companies.slug, port: companies.companyDbPort }).from(companies)
+      .where(or(isNotNull(companies.slug), ne(companies.provisioningStatus, "pending")));
     services.database = "ok";
-  } catch {
-    // leave as "unreachable"
-  }
-
-  // Check Company-DB health
-  try {
-    const res = await fetch(`${COMPANY_DB_BASE}/health`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (res.ok) {
-      services.companyDb = "ok";
-    }
-  } catch {
-    // leave as "unreachable"
-  }
-
-  const allOk = Object.values(services).every((s) => s === "ok");
-
-  return NextResponse.json(
-    {
-      status: allOk ? "ok" : "degraded",
-      services,
-    },
-    { status: allOk ? 200 : 503 },
-  );
+    const readiness = await Promise.all(tenants.map(({ slug, port }) =>
+      slug ? isCompanyDbReady(port, slug) : Promise.resolve(false),
+    ));
+    services.companyDb = tenants.length === 0 ? "idle"
+      : readiness.every(Boolean) ? "ok" : "unreachable";
+  } catch { /* database remains unreachable */ }
+  const healthy = Object.values(services).every((status) => status !== "unreachable");
+  return NextResponse.json({ status: healthy ? "ok" : "degraded", services }, {
+    status: healthy ? 200 : 503,
+    headers: { "Cache-Control": "no-store" },
+  });
 }

@@ -52,16 +52,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Lazy-provision (community-tier signups arrive with status='pending').
-    try {
-      await ensureCompanyProvisioned(companyId);
-    } catch (provisionErr) {
-      console.error(
-        `[upload] Lazy provisioning failed for companyId=${companyId}:`,
-        provisionErr,
-      );
-    }
-
     let uploadMetadata;
     try {
       uploadMetadata = parseDocumentUploadMetadata(formData, {
@@ -99,6 +89,8 @@ export async function POST(req: NextRequest) {
     if (!bufferValidation.valid) {
       return NextResponse.json({ error: bufferValidation.error }, { status: 400 });
     }
+    // Reject before persisting a document when its knowledge service is down.
+    await ensureCompanyProvisioned(companyId);
     const sha256 = createHash("sha256").update(buffer).digest("hex");
     const documentId = randomUUID();
     const fileType = inferFileType(file.name, file.type);

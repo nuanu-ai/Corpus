@@ -12,6 +12,19 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: corpus
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       BETTER_AUTH_URL: http://localhost:3000
@@ -20,7 +33,8 @@ jobs:
       ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
       COMPANY_DB_INTERNAL_SERVICE_SECRET: ci-only-placeholder-service-secret
       INNGEST_SIGNING_KEY: signkey-ci-only-placeholder
-      CORPUS_DEMO_MODE: "true"
+      CORPUS_DEMO_MODE: "false"
+      CORPUS_SMOKE_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/corpus
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,11 +43,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run release:check
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=low
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run test:smoke
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

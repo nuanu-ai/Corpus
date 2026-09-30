@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { provisionTenantDbRepo, allocateNextCompanyDbPort } from "@/lib/company-db/provisioning";
+import { ensureCompanyProvisioned, allocateNextCompanyDbPort } from "@/lib/company-db/provisioning";
 import { db } from "@/lib/db";
 import { companies, companyMembers, users } from "@/lib/db/schema";
 
@@ -57,10 +57,9 @@ export async function ensurePersonalProjectForUser(input: {
   name?: string | null;
   email?: string | null;
   /**
-   * When true, only the DB rows are created — the per-tenant git repo + PM2
-   * daemon are NOT spun up. Used for tier='community' (BYOK) sign-ups so we don't
-   * pay 85+ MB of RAM per casual signup. The repo is materialised lazily on
-   * first chat/upload via ensureCompanyProvisioned.
+   * Community signups create only metadata. First knowledge access assigns
+   * the tenant slug and asks the supervisor to start its service, so unused
+   * accounts do not allocate Company-DB processes.
    */
   skipProvisioning?: boolean;
 }): Promise<PersonalProjectRecord> {
@@ -98,7 +97,7 @@ export async function ensurePersonalProjectForUser(input: {
             autoCreated: true,
           },
           companyDbPort,
-          provisioningStatus: input.skipProvisioning ? "pending" : "active",
+          provisioningStatus: "pending",
         })
         .returning({
           id: companies.id,
@@ -121,7 +120,7 @@ export async function ensurePersonalProjectForUser(input: {
 
     if (!input.skipProvisioning) {
       try {
-        await provisionTenantDbRepo(created.id);
+        await ensureCompanyProvisioned(created.id);
       } catch (error) {
         console.error(
           `[personal-project] Provisioning failed for tenant=${created.id}:`,

@@ -3,3 +3,8 @@ Copyright 2026 Corpus contributors
 
 This product includes software developed by third-party open-source projects.
 Their licenses and notices remain the property of their respective authors.
+
+Local development tooling includes inngest-cli, distributed separately by
+Inngest, Inc. under its Server Side Public License with an Apache 2.0 future
+license. Its license is installed at node_modules/inngest-cli/bin/LICENSE.md.
+This notice does not change the Apache-2.0 license of Corpus source code.

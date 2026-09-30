@@ -56,7 +56,7 @@ The Next.js app handles the interface, authentication, API, and workflow orchest
 
 ## Quick start
 
-**You will need:** Node.js 22, npm 10+, and a running PostgreSQL 15+ database. AI chat also needs a configured supported model provider. Python 3.11+ is needed only for the optional extraction service.
+**You will need:** Node.js 22, npm 10+, Git, and a running PostgreSQL 15+ database on macOS or Linux. Main AI chat requires an Anthropic API key. Text-document ingestion and search work without a model key. Python 3.11+ is needed for the optional extraction service.
 
 ```bash
 git clone https://github.com/nuanu-ai/Corpus.git
@@ -71,19 +71,33 @@ Create an empty PostgreSQL database and edit `.env.local`:
 - Set `DATABASE_URL` to your database connection string.
 - Generate separate `BETTER_AUTH_SECRET` and `COMPANY_DB_INTERNAL_SERVICE_SECRET` values with `openssl rand -base64 32`.
 - Generate `ENCRYPTION_KEY` with `openssl rand -hex 32`.
-- Configure a supported AI provider; see [configuration](docs/configuration.md).
+- Set `ANTHROPIC_API_KEY` to enable AI chat. An OpenAI key alone does not enable it.
+- Keep the local Company-DB and Inngest settings from the example; see [configuration](docs/configuration.md).
 
-Then build Company-DB, apply the schema to your local database, and start the app:
+Build Company-DB and apply the schema (these commands read `.env.local`):
 
 ```bash
 npm run --workspace @corpus/company-db build
 npm run db:push
+```
+
+Keep both of these running, in separate terminals from the repository root:
+
+```bash
+# Terminal 1: Company-DB tenant services + local Inngest document worker
+npm run services
+```
+
+```bash
+# Terminal 2: web application
 npm run dev
 ```
 
-Open **[localhost:3000](http://localhost:3000)**.
+Open **[localhost:3000](http://localhost:3000)** and create an account. Upload a `.txt` or `.md` document and wait for processing before searching its contents. The outbox worker runs once per minute; the local Inngest console is at [localhost:8288](http://localhost:8288).
 
-The example configuration enables synthetic demo mode. Configure authentication, storage, workers, and connector credentials for your own deployment; disable demo mode before production use. The optional extraction service has separate [Python dependencies](extraction/requirements.txt).
+The example uses real local authentication with demo mode disabled. The supervisor creates isolated company stores under `data/companies` and starts their services; `storage` holds uploaded files. Both directories are ignored by Git. Keep their contents when restarting.
+
+`npm run services` is a local development command. For production, run the Company-DB supervisor and a configured Inngest deployment as managed services; see [configuration](docs/configuration.md). PDF/OCR and financial extraction require their corresponding parsers/providers. The extraction service has separate [Python dependencies](extraction/requirements.txt).
 
 ## Find your way around
 
@@ -107,7 +121,7 @@ npm test                 # Builds Company-DB, then runs the synthetic tests
 npm run build
 ```
 
-See the [fixture policy](lib/mock-data/README.md) and [release checklist](docs/release-checklist.md). The current synthetic test suite is deliberately small; passing it does not establish production readiness.
+See the [fixture policy](lib/mock-data/README.md) and [release checklist](docs/release-checklist.md). CI also runs a real local smoke test: signup, document upload and processing, search with provenance, rejected cross-company access, and service restart. To run it yourself, create an **empty disposable local database**, set `CORPUS_SMOKE_DATABASE_URL` to its connection string, then run `npm run test:smoke`. The test refuses nonempty databases and does not call AI providers. Passing it does not establish production readiness.
 
 ## Make it better
 

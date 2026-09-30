@@ -1,5 +1,12 @@
 /** Shared error classes used across API auth and tenant resolution. */
 
+export class CompanyDbUnavailableError extends Error {
+  constructor() {
+    super("Company knowledge service is unavailable. Start the Company-DB supervisor and retry.");
+    this.name = "CompanyDbUnavailableError";
+  }
+}
+
 export class UnauthorizedError extends Error {
   constructor() { super("Unauthorized"); this.name = "UnauthorizedError"; }
 }

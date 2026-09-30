@@ -83,6 +83,15 @@ export function validateEnv(): { valid: boolean; errors: string[]; warnings: str
     );
   }
 
+  const inngestDev = process.env.INNGEST_DEV?.trim().toLowerCase();
+  if (isProd && inngestDev && !["0", "false"].includes(inngestDev)) {
+    errors.push("INNGEST_DEV must be unset in production; configure authenticated Inngest instead.");
+  }
+  const processor = process.env.CORPUS_DOCUMENT_PROCESSOR;
+  if (processor && !["inngest", "codex"].includes(processor)) {
+    errors.push("CORPUS_DOCUMENT_PROCESSOR must be inngest or codex.");
+  }
+
   for (const group of REQUIRED_GROUPS) {
     const hasAnyValue = group.names.some((name) => {
       const value = process.env[name];

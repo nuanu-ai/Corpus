@@ -1,3 +1,4 @@
+import { ensureCompanyProvisioned } from "@/lib/company-db/provisioning";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthContext, handleApiError, requireApiKeyScope, requireCompanyDbDomainAccess } from "@/lib/api-auth";
 import { searchEntities } from "@/lib/company-db/client";
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await getAuthContext();
     requireApiKeyScope(auth, "company_db.read");
+    await ensureCompanyProvisioned(auth.companyId);
     const companySlug = await getCompanySlug(auth.companyId);
     const [company] = await db
       .select({ companyDbPort: companies.companyDbPort })

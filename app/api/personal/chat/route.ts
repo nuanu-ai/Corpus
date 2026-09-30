@@ -165,15 +165,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Lazy-provision (community-tier signups land here pending; no-op for active).
-    try {
-      await ensureCompanyProvisioned(companyId);
-    } catch (provisionErr) {
-      console.error(
-        `[personal-chat] Lazy provisioning failed for projectId=${companyId}:`,
-        provisionErr,
-      );
-    }
+    await ensureCompanyProvisioned(companyId);
 
     const [thread] = await db
       .select({

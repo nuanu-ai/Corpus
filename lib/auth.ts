@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { jwt, mcp } from "better-auth/plugins";
 import { db } from "./db";
 import * as schema from "./db/schema";
-import { allocateNextCompanyDbPort, provisionCompanyDbRepo } from "@/lib/company-db/provisioning";
+import { allocateNextCompanyDbPort, ensureCompanyProvisioned } from "@/lib/company-db/provisioning";
 import { collectTrustedOriginsFromEnv } from "./embed-config";
 import { ensurePersonalProjectForUser } from "@/lib/personal-projects";
 
@@ -83,8 +83,8 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           const companyName = `${user.name}'s Company`;
-          // Read tier from the just-created user row. Default 'managed' preserves
-          // existing behavior; 'community' (BYOK) defers PM2 spawn to first use.
+          // Managed accounts wait for startup; community accounts request their
+          // service lazily on first knowledge access.
           const tier = (user as { tier?: string }).tier ?? "managed";
           const lazy = tier === "community";
 
@@ -97,7 +97,7 @@ export const auth = betterAuth({
               .values({
                 name: companyName,
                 companyDbPort,
-                provisioningStatus: lazy ? "pending" : "active",
+                provisioningStatus: "pending",
               })
               .returning({ id: schema.companies.id });
 
@@ -112,18 +112,13 @@ export const auth = betterAuth({
 
           if (lazy) {
             console.info(
-              `[company-db] tier=community — skipping eager provisioning for companyId=${companyId} port=${companyDbPort}; will materialise on first chat/upload`,
+              `[company-db] tier=community — skipping eager provisioning for companyId=${companyId} port=${companyDbPort}; supervisor will start it on first knowledge access`,
             );
           } else {
-            // Provision the git-backed company repo (slug + folder structure + agents).
+            // Wait for the supervisor to make the tenant service ready.
             // Keep signup resilient: user account is created even if filesystem bootstrap fails.
             try {
-              const result = await provisionCompanyDbRepo(companyId);
-              if (result) {
-                console.info(
-                  `[company-db] Provisioned tenant slug=${result.slug} port=${companyDbPort} repo=${result.repoPath}`,
-                );
-              }
+              await ensureCompanyProvisioned(companyId);
             } catch (error) {
               console.error(
                 `[company-db] Provisioning failed for companyId=${companyId}:`,
