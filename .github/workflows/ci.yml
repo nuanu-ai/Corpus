@@ -36,7 +36,7 @@ jobs:
       CORPUS_DEMO_MODE: "false"
       CORPUS_SMOKE_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/corpus
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
