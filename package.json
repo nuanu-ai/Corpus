@@ -37,7 +37,7 @@
     "test:smoke": "node scripts/smoke-self-hosted.mjs"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.48",
+    "@ai-sdk/anthropic": "^4.0.65",
     "@ai-sdk/react": "^3.0.163",
     "@anthropic-ai/sdk": "^0.78.0",
     "@assistant-ui/core": "0.3.21",
