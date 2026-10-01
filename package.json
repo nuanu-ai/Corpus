@@ -47,7 +47,7 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@next/env": "16.3.8",
     "@swc/helpers": "0.5.23",
-    "ai": "^6.0.161",
+    "ai": "^7.0.118",
     "apify-client": "^2.23.3",
     "better-auth": "1.6.22",
     "class-variance-authority": "^0.7.1",
