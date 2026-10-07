@@ -67,7 +67,7 @@
     "plaid": "^41.3.0",
     "postgres": "^3.4.8",
     "radix-ui": "^1.4.3",
-    "react": "19.2.3",
+    "react": "19.3.0",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "3.7.0",
