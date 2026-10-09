@@ -54,7 +54,7 @@
     "clsx": "^2.1.1",
     "docx": "^9.6.1",
     "drizzle-orm": "^0.45.3",
-    "inngest": "^3.54.2",
+    "inngest": "^4.21.0",
     "jose": "^6.2.2",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.11.0",
