@@ -1,5 +1,5 @@
 pyyaml>=6.0.3
-openpyxl>=3.1.0
+openpyxl>=3.1.5
 pdfplumber>=0.11.0
 anthropic>=1.8.0
 httpx>=0.28.1
